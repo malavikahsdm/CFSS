@@ -285,7 +285,7 @@ void activateCallForwarding(const char *username, const char *type, const char *
 void deactivateCallForwarding(const char *username, const char *phone_no, int client_socket) {
     pthread_mutex_lock(&user_mutex);
     for (int i = 0; i < forwardingCount; i++) {
-        if (strcmp(userForwardings[i].username, username) == 0 && strcmp(userForwardings[i].phone_no,phone_no)==0) {
+        if (strcmp(userForwardings[i].username, username) == 0 && strcmp(userForwardings[i].phone_no,phone_no)==0 && userForwardings[i].is_forwarding_active==1) {
             userForwardings[i].is_forwarding_active = 0;
             saveForwardingsToFile();
             send(client_socket, "Call forwarding deactivated.\n", BUFFER_SIZE, 0);
@@ -364,7 +364,7 @@ void displayCallLog(char *caller, int client_socket){
 
 void unregisterUser(const char *phone_no, const char *password, int client_socket){
         for (int i = 0; i < userCount; i++) {
-        if (strcmp(users[i].phone_no, phone_no) == 0 && strcmp(users[i].password,password)==0) {
+        if (strcmp(users[i].phone_no, phone_no) == 0 && strcmp(users[i].password,password)==0 && users[i].is_registered==1) {
         users[i].is_registered = 0; //set to zero if unregistered, 1 if registered
         saveUsersToFile();
                 send(client_socket, "User unregistered successfully. \n", BUFFER_SIZE, 0);
@@ -393,10 +393,12 @@ void handleCall(const char *caller, const char *callee, const char *phone_no, in
         if(strcmp(caller,userForwardings[i].destination_number)==0){
                         send(client_socket,"caller and destination number are same\n",BUFFER_SIZE,0);
                         pthread_mutex_unlock(&user_mutex);
+						return;
         }
     if(strcmp(phone_no,caller)==0){
                 send(client_socket,"caller and callee number are same",BUFFER_SIZE,0);
                 pthread_mutex_unlock(&user_mutex);
+				return;
         }
         if (strcmp(userForwardings[i].username, callee) == 0 && strcmp(userForwardings[i].phone_no,phone_no)==0 && userForwardings[i].is_forwarding_active == 1) {
 
@@ -572,6 +574,3 @@ int main() {
    }
     return 0;
 }
-
-
-
